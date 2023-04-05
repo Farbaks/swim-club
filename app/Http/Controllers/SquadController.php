@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Squads\AddSwimmersToSquadDto;
 use App\Http\Requests\Squads\NewSquadDto;
+use App\Http\Requests\Squads\RemoveSwimmerFromSquadDto;
 use App\Http\Requests\Squads\UpdateSquadDto;
 use App\Models\Squad;
 use App\Models\SquadMember;
@@ -160,9 +161,8 @@ class SquadController extends Controller
     // Function to add swimmers to squad
     public function addSwimmersToSquad(AddSwimmersToSquadDto $request, string $id)
     {
-
+        // Check if squad exists
         $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
-
 
         if ($squad == '') {
             return response()->json([
@@ -234,5 +234,43 @@ class SquadController extends Controller
                 'count' => $membersCount
             ]
         ], 200);
+    }
+
+    // Function to remove swimmer from squad
+    public function removeSquadMember(RemoveSwimmerFromSquadDto $request, string $id)
+    {
+        // Check if squad exists
+        $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
+
+        if ($squad == '') {
+            return response()->json([
+                'status' => 400,
+                'message' => 'This squad does not exist',
+                'data' => []
+            ], 200);
+        }
+
+        // Check if swimmer is a member of squad
+        $member = SquadMember::where('squadId', $id)
+            ->where('userId', $request->swimmer)->where('isDeleted', false)->first();
+
+        if ($member == '') {
+            return response()->json([
+                'status' => 400,
+                'message' => 'This member does not belong to this squad.',
+                'data' => []
+            ], 200);
+        }
+
+
+        // Delete squad member (Hard delete)
+        $member->delete();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Squad member deleted successfully.',
+            'data' => []
+        ], 200);
+
     }
 }

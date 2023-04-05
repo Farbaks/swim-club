@@ -38,6 +38,7 @@ Route::middleware('user-auth')->group(function () {
 
         Route::post('/squads/{id}/members', 'addSwimmersToSquad')->middleware('roles:admin,coach');
         Route::get('/squads/{id}/members', 'getSquadMembers')->middleware('roles:admin,coach');
+        Route::delete('/squads/{id}/members', 'removeSquadMember')->middleware('roles:admin,coach');
     });
 
 });
