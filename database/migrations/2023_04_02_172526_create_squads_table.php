@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('squads', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
+            $table->mediumtext('description')->nullable();
+            $table->string('rank')->nullable();
+            $table->foreignId('coachId')->constrained('users')->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

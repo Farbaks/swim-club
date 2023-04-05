@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('relationships', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('guardianId')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('wardId')->constrained('users')->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

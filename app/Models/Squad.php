@@ -8,4 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Squad extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'rank',
+        'coachId',
+        'status',
+        'isDeleted'
+    ];
+
 }

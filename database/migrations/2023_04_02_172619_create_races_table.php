@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('races', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
+            $table->mediumtext('description')->nullable();
+            $table->longtext('requirements')->nullable();
+            $table->string('dates');
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

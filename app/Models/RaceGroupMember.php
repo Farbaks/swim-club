@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class RaceGroupMember extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'age',
+        'squadMemberId',
+        'raceGroupId',
+        'status',
+        'isDeleted'
+    ];
 }

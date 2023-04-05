@@ -8,4 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Race extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+        'requirements',
+        'dates',
+        'status',
+        'isDeleted'
+    ];
+
 }

@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('race_groups', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->mediumtext('description')->nullable();
+            $table->foreignId('raceId')->constrained('races')->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

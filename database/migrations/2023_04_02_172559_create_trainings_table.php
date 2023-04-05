@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('trainings', function (Blueprint $table) {
             $table->id();
+            $table->string('name')->unique();
+            $table->mediumtext('description')->nullable();
+            $table->longtext('requirements')->nullable();
+            $table->date('startTime');
+            $table->date('endTime');
+            $table->string('day');
+            $table->string('interval');
+            $table->foreignId('squadId')->constrained('squads')->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

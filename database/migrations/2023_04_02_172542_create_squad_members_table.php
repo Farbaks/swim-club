@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('squad_members', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('squadId')->constrained('squads')->cascadeOnDelete();
+            $table->foreignId('userId')->constrained('users')->cascadeOnDelete();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }

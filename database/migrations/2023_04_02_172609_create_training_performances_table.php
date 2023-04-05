@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('training_performances', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('trainingId')->constrained('trainings')->cascadeOnDelete();
+            $table->foreignId('squadMemberId')->constrained('squad_members')->cascadeOnDelete();
+            $table->integer('time');
+            $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete();
+            $table->string('rank')->nullable();
+            $table->string('points')->nullable();
+            $table->string('status')->default('active');
+            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
         });
     }
