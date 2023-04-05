@@ -14,8 +14,7 @@ class AddSwimmersToSquadDto extends FormRequest
     public function rules(): array
     {
         return [
-            'swimmers' => 'required|array',
-            'swimmers.*' => 'integer'
+            'swimmer' => 'integer'
         ];
     }
 

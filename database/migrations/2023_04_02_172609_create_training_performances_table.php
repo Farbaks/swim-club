@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,10 +14,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('trainingId')->constrained('trainings')->cascadeOnDelete();
             $table->foreignId('squadMemberId')->constrained('squad_members')->cascadeOnDelete();
-            $table->integer('time');
+            $table->string('time');
             $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete();
             $table->string('rank')->nullable();
             $table->string('points')->nullable();
+            $table->date('trainingDate');
             $table->string('status')->default('active');
             $table->boolean('isDeleted')->default(false);
             $table->timestamps();

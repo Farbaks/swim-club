@@ -15,8 +15,9 @@ class NewSquadDto extends FormRequest
     {
         return [
             'name' => 'required|max:50|string',
-            'description' => 'nullable|max:50|string',
-            'rank' => 'nullable|max:50|string'
+            'description' => 'nullable|string',
+            'rank' => 'nullable|max:50|string',
+            'coachId' => 'required|numeric'
         ];
     }
 

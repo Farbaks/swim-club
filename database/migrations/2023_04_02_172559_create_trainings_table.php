@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->mediumtext('description')->nullable();
             $table->longtext('requirements')->nullable();
-            $table->date('startTime');
-            $table->date('endTime');
+            $table->string('startTime');
+            $table->string('endTime');
             $table->string('day');
             $table->string('interval');
             $table->foreignId('squadId')->constrained('squads')->cascadeOnDelete();

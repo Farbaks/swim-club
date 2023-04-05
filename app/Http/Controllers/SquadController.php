@@ -8,6 +8,7 @@ use App\Http\Requests\Squads\RemoveSwimmerFromSquadDto;
 use App\Http\Requests\Squads\UpdateSquadDto;
 use App\Models\Squad;
 use App\Models\SquadMember;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -16,13 +17,25 @@ class SquadController extends Controller
     //Function to create a squad
     public function create(NewSquadDto $request)
     {
+        // Check if squad with name already exists
+        $checkSquad = Squad::where('name', $request->name)->where('isDeleted', false)->first();
 
-        $checkUser = Squad::where('name', $request->name)->where('isDeleted', false)->first();
-
-        if ($checkUser != "") {
+        if ($checkSquad != "") {
             return response()->json([
                 'status' => 400,
                 'message' => 'A squad with this name already exists',
+                'data' => []
+            ], 200);
+        }
+
+        // Check if coach is valid
+        $checkCoach = User::where('id', $request->coachId)
+            ->where('role', 'coach')->where('isDeleted', false)->first();
+
+        if ($checkCoach == "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Invalid coach id provided.',
                 'data' => []
             ], 200);
         }
@@ -31,7 +44,7 @@ class SquadController extends Controller
         $squad->name = $request->name;
         $squad->description = $request->description;
         $squad->rank = $request->rank ?? '';
-        $squad->coachId = $request->userId;
+        $squad->coachId = $request->coachId;
         $squad->save();
 
         return response()->json([
@@ -52,7 +65,8 @@ class SquadController extends Controller
 
         $search = $request->has('query') ? $request->get('query') : '';
 
-        $squads = Squad::offset(($page - 1) * $limit)->limit($limit)
+        $squads = Squad::with('coach')
+            ->offset(($page - 1) * $limit)->limit($limit)
             ->where(function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhere('description', 'like', '%' . $search . '%');
@@ -75,7 +89,7 @@ class SquadController extends Controller
         ], 200);
     }
 
-    // Function to fetch on user
+    // Function to fetch one squad
     public function getOneSquad(Request $request, string $id)
     {
         $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
@@ -94,7 +108,8 @@ class SquadController extends Controller
             'data' => $squad
         ], 200);
     }
-
+    
+    // Functon to update squad
     public function updateSquad(UpdateSquadDto $request, string $id)
     {
         $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
@@ -133,6 +148,7 @@ class SquadController extends Controller
 
     }
 
+    // Function to delete squad
     public function deleteSquad(Request $request, string $id)
     {
         $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
@@ -147,14 +163,13 @@ class SquadController extends Controller
             ], 200);
         }
 
-        $squad->isDeleted = true;
-
-        $squad->save();
+        // Delete squad (Hard delete)
+        $squad->delete();
 
         return response()->json([
             'status' => 200,
             'message' => 'Squad deleted successfully.',
-            'data' => $squad
+            'data' => []
         ], 200);
     }
 
@@ -172,21 +187,36 @@ class SquadController extends Controller
             ], 200);
         }
 
-        foreach ($request->swimmers as $swimmer) {
+        // Check if swimmer is valid
+        $checkSwimmer = User::where('id', $request->swimmer)
+            ->where('role', 'swimmer')->where('isDeleted', false)->first();
 
-            // Check if user has not yet been added to squad
-            $check = SquadMember::where('squadId', $id)
-                ->where('userId', $swimmer)->where('isDeleted', false)->first();
-
-            if (!$check) {
-                $newMember = new SquadMember;
-
-                $newMember->squadId = $id;
-                $newMember->userId = $swimmer;
-
-                $newMember->save();
-            }
+        if ($checkSwimmer == "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Invalid swimmer id provided.',
+                'data' => []
+            ], 200);
         }
+
+        // Check if user has not yet been added to squad
+        $check = SquadMember::where('squadId', $id)
+            ->where('userId', $request->swimmer)->where('isDeleted', false)->first();
+
+        if ($check) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'This user is already a part of the squad.',
+                'data' => []
+            ], 200);
+        }
+
+        $newMember = new SquadMember;
+
+            $newMember->squadId = $id;
+            $newMember->userId = $request->swimmer;
+
+            $newMember->save();
 
         return response()->json([
             'status' => 201,
