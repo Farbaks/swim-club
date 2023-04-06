@@ -14,14 +14,14 @@ class UpdateTrainingDto extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'nullable|max:50|string',
-            'description' => 'nullable|string',
-            'requirements' => 'nullable|string',
-            'startTime' => 'nullable|date_format:H:i',
-            'endTime' => 'nullable|date_format:H:i',
-            'day' => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'interval' => 'nullable|in:once,weekly',
-            'squadId' => 'nullable|integer',
+            'name' => 'sometimes|required|max:50|string',
+            'description' => 'sometimes|required|string',
+            'requirements' => 'sometimes|required|string',
+            'startTime' => 'sometimes|required|date_format:H:i',
+            'endTime' => 'sometimes|required|date_format:H:i',
+            'day' => 'sometimes|required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+            'interval' => 'sometimes|required|in:once,weekly',
+            'squadId' => 'sometimes|required|integer',
         ];
     }
 

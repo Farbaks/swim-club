@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Relationships\UpdateRelationshipDto;
 use App\Http\Requests\Users\NewUserDto;
 use App\Http\Requests\Users\SigninUserDto;
+use App\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 use STS\JWT\Facades\JWT;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -17,8 +21,6 @@ class UserController extends Controller
     {
 
         $checkUser = User::where('emailAddress', $request->emailAddress)->first();
-
-        
 
         if ($checkUser != "") {
             return response()->json([
@@ -44,12 +46,43 @@ class UserController extends Controller
         $user->emailAddress = $request->emailAddress;
         $user->password = Hash::make($request->password);
         $user->phoneNumber = $request->phoneNumber;
-        $user->dateOfBirth = date("Y-m-d", strtotime($request->dateOfBirth));
+        $user->dateOfBirth = $request->dateOfBirth;
         $user->pictureUrl = $request->pictureUrl;
         $user->role = $request->role;
         $user->address = $request->address;
         $user->postcode = $request->postcode;
         $user->save();
+
+        // For underage swimmers
+        if ($this->getAgeDifference($request->dateOfBirth) < 18) {
+            // Check if parent email is provided
+            if (!$request->parentEmail) {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'Email linked to parent\'s registered account is required for swimmers below the age of 18.',
+                    'data' => []
+                ], 200);
+            }
+
+            // Check for guardian email
+            $checkParent = User::where('emailAddress', $request->parentEmail)->where('role', 'parent')->first();
+
+            if ($checkParent == "") {
+                $user->delete();
+
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'No account linked with the parent\'s email was found.',
+                    'data' => []
+                ], 200);
+            }
+
+            $requestRelationship = new Relationship;
+            $requestRelationship->guardianId = $checkParent->id;
+            $requestRelationship->wardId = $user->id;
+            $requestRelationship->status = 'pending';
+            $requestRelationship->save();
+        }
 
         return response()->json([
             'status' => 201,
@@ -94,6 +127,28 @@ class UserController extends Controller
         ], 200);
     }
 
+    public function refreshToken(Request $request)
+    {
+        $user = User::where('id', $request->userId)->first();
+
+        // Check if user email exists
+        if ($user == "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Account does not exist',
+                'data' => []
+            ], 200);
+        }
+
+        // Generate api_token
+        return response()->json([
+            'status' => 200,
+            'message' => 'Token refresh succesful.',
+            'apiToken' => $this->generateAPIToken($user),
+            'data' => $user
+        ], 200);
+    }
+
     // Function to fetch users
     public function getAllUsers(Request $request)
     {
@@ -132,7 +187,7 @@ class UserController extends Controller
     }
 
     // Function to fetch on user
-    public function getOneUser(Request $request, $id) 
+    public function getOneUser(Request $request, $id)
     {
         $user = User::find($id);
 
@@ -150,12 +205,53 @@ class UserController extends Controller
             'data' => $user
         ], 200);
 
-    } 
+    }
+
+    // Get underage swimmers for a parent
+    public function getRelationships(Request $request)
+    {
+        $status = $request->has('status') ? $request->get('status') : 'active';
+
+        $relationship = Relationship::where(($request->userRole == 'parent' ? 'guardianId' : 'wardId'), $request->userId)
+            ->where('status', 'like', $status . '%')
+            ->with(['ward', 'guardian'])->get();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Relationships fetched successfully.',
+            'data' => $relationship,
+        ], 200);
+    }
+
+    // Update relationship
+    public function updateRelationship(UpdateRelationshipDto $request, string $id)
+    {
+        // Check if relationship exists
+        $relationship = Relationship::where('id', $id)->first();
+
+        if ($relationship == "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Relationship does not exist',
+                'data' => []
+            ], 200);
+        }
+
+        $relationship->status = $request->status;
+        $relationship->save();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Relationships updated successfully.',
+            'data' => $relationship,
+        ], 200);
+
+    }
 
     // Function to generate token
     public function generateAPIToken(User $user)
     {
-        
+
         $data = [
             'userId' => $user->id,
             'userRole' => $user->role
@@ -164,5 +260,16 @@ class UserController extends Controller
 
         return $encrypted;
 
+    }
+
+    // Function to check the age of user
+    public function getAgeDifference($dateOfBirth): int
+    {
+        $toDate = Carbon::parse($dateOfBirth);
+        $fromDate = Carbon::parse('today');
+
+        $years = $toDate->diffInYears($fromDate);
+
+        return $years;
     }
 }

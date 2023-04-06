@@ -28,7 +28,15 @@ Route::middleware('user-auth')->group(function () {
     // Users endpoints
     Route::controller(UserController::class)->group(function () {
         Route::get('/users', 'getAllUsers');
+
+        Route::get('/users/relationships', 'getRelationships');
+        Route::put('/users/relationships/{id}', 'updateRelationship');
+
+        Route::get('/users/me', 'refreshToken');
+
         Route::get('/users/{id}', 'getOneUser');
+
+        
     });
 
     // Squad and squad members endpoints

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Squads;
+namespace App\Http\Requests\Relationships;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSquadDto extends FormRequest
+class UpdateRelationshipDto extends FormRequest
 {
-    /**
+     /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
@@ -14,9 +14,7 @@ class UpdateSquadDto extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|required|max:50|string',
-            'description' => 'sometimes|required|string',
-            'rank' => 'sometimes|required|max:50|string'
+            'status' => 'required|in:active,inactive',
         ];
     }
 

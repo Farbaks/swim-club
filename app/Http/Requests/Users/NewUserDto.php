@@ -19,11 +19,12 @@ class NewUserDto extends FormRequest
             'phoneNumber' => 'required',
             'emailAddress' => 'required|email',
             'password' => 'required|min:8|string',
-            'dateOfBirth' => 'required|date|before:today',
-            'pictureUrl' => 'nullable|url',
+            'dateOfBirth' => 'required|date_format:Y-m-d|before:today',
+            'pictureUrl' => 'sometimes|required|url',
             'role' => 'required|in:admin,coach,swimmer,parent',
             'address' => 'required|string',
             'postcode' => 'required|string',
+            'parentEmail' => 'sometimes|required|email'
         ];
     }
 

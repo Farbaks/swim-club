@@ -14,12 +14,12 @@ class UpdateTrainingPerformanceDto extends FormRequest
     public function rules(): array
     {
         return [
-            'squadMemberId' => 'nullable|integer',
-            'time' => 'nullable|date_format:i:s.v',
-            'strokeId' => 'nullable|integer',
-            'rank' => 'nullable|string',
-            'points' => 'nullable|string',
-            'trainingDate' => 'nullable|date_format:Y-m-d',
+            'squadMemberId' => 'sometimes|required|integer',
+            'time' => 'sometimes|required|date_format:i:s.v',
+            'strokeId' => 'sometimes|required|integer',
+            'rank' => 'sometimes|required|string',
+            'points' => 'sometimes|required|string',
+            'trainingDate' => 'sometimes|required|date_format:Y-m-d',
         ];
     }
 
