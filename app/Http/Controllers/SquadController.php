@@ -77,6 +77,14 @@ class SquadController extends Controller
                 ->orWhere('description', 'like', '%' . $search . '%');
         })->where('isDeleted', false)->count();
 
+        // Add members count
+        foreach ($squads as $squad) {
+            $membersCount = SquadMember::where('squadId', $squad->id)
+                ->where('isDeleted', false)
+                ->count();
+            $squad['membersCount'] = $membersCount;
+        }
+
         return response()->json([
             'status' => 200,
             'message' => 'Squads fetched successfully.',
@@ -92,7 +100,7 @@ class SquadController extends Controller
     // Function to fetch one squad
     public function getOneSquad(Request $request, string $id)
     {
-        $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
+        $squad = Squad::with('coach')->where('id', $id)->where('isDeleted', false)->first();
 
         if ($squad == '') {
             return response()->json([
@@ -102,13 +110,19 @@ class SquadController extends Controller
             ], 200);
         }
 
+        // Add members count
+        $membersCount = SquadMember::where('squadId', $squad->id)
+            ->where('isDeleted', false)
+            ->count();
+        $squad['membersCount'] = $membersCount;
+
         return response()->json([
             'status' => 200,
             'message' => 'Squad details fetched successfully.',
             'data' => $squad
         ], 200);
     }
-    
+
     // Functon to update squad
     public function updateSquad(UpdateSquadDto $request, string $id)
     {
@@ -122,7 +136,7 @@ class SquadController extends Controller
             ], 200);
         }
 
-        $checkUser = Squad::where('name', $request->name)->where('isDeleted', false)->first();
+        $checkUser = Squad::where('name', $request->name)->whereNot('id', $id)->where('isDeleted', false)->first();
 
         if ($checkUser != "") {
             return response()->json([
@@ -213,10 +227,10 @@ class SquadController extends Controller
 
         $newMember = new SquadMember;
 
-            $newMember->squadId = $id;
-            $newMember->userId = $request->swimmer;
+        $newMember->squadId = $id;
+        $newMember->userId = $request->swimmer;
 
-            $newMember->save();
+        $newMember->save();
 
         return response()->json([
             'status' => 201,
@@ -234,7 +248,8 @@ class SquadController extends Controller
 
         $search = $request->has('query') ? $request->get('query') : '';
 
-        $members = SquadMember::offset(($page - 1) * $limit)->limit($limit)
+        $members = SquadMember::where('squadId', $id)
+            ->offset(($page - 1) * $limit)->limit($limit)
             ->join('users', 'squad_members.userId', '=', 'users.id')
             ->where(function ($query) use ($search) {
                 $query->where('users.firstName', 'like', '%' . $search . '%')
@@ -245,7 +260,8 @@ class SquadController extends Controller
             ->select('users.*')
             ->get();
 
-        $membersCount = SquadMember::join('users', 'squad_members.userId', '=', 'users.id')
+        $membersCount = SquadMember::where('squadId', $id)
+            ->join('users', 'squad_members.userId', '=', 'users.id')
             ->where(function ($query) use ($search) {
                 $query->where('users.firstName', 'like', '%' . $search . '%')
                     ->orWhere('users.lastName', 'like', '%' . $search . '%');
@@ -267,7 +283,7 @@ class SquadController extends Controller
     }
 
     // Function to remove swimmer from squad
-    public function removeSquadMember(RemoveSwimmerFromSquadDto $request, string $id)
+    public function removeSquadMember(Request $request, string $id, string $memberId)
     {
         // Check if squad exists
         $squad = Squad::where('id', $id)->where('isDeleted', false)->first();
@@ -282,7 +298,7 @@ class SquadController extends Controller
 
         // Check if swimmer is a member of squad
         $member = SquadMember::where('squadId', $id)
-            ->where('userId', $request->swimmer)->where('isDeleted', false)->first();
+            ->where('userId', $memberId)->where('isDeleted', false)->first();
 
         if ($member == '') {
             return response()->json([

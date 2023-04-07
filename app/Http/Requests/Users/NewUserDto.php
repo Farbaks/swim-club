@@ -22,6 +22,7 @@ class NewUserDto extends FormRequest
             'dateOfBirth' => 'required|date_format:Y-m-d|before:today',
             'pictureUrl' => 'sometimes|required|url',
             'role' => 'required|in:admin,coach,swimmer,parent',
+            'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'postcode' => 'required|string',
             'parentEmail' => 'sometimes|required|email'

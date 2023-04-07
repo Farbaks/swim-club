@@ -49,12 +49,24 @@ class UserController extends Controller
         $user->dateOfBirth = $request->dateOfBirth;
         $user->pictureUrl = $request->pictureUrl;
         $user->role = $request->role;
+        $user->gender = $request->gender;
         $user->address = $request->address;
         $user->postcode = $request->postcode;
         $user->save();
 
         // For underage swimmers
         if ($this->getAgeDifference($request->dateOfBirth) < 18) {
+
+            if($request->role != 'swimmer') {
+                $user->delete();
+
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'User with "'.$request->role.'" role has to be above the age of 18.',
+                    'data' => []
+                ], 200);
+            }
+
             // Check if parent email is provided
             if (!$request->parentEmail) {
                 return response()->json([

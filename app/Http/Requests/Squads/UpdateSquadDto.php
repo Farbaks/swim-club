@@ -16,7 +16,7 @@ class UpdateSquadDto extends FormRequest
         return [
             'name' => 'sometimes|required|max:50|string',
             'description' => 'sometimes|required|string',
-            'rank' => 'sometimes|required|max:50|string'
+            'rank' => 'nullable|max:50|string'
         ];
     }
 

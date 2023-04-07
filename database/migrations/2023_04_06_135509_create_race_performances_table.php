@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('race_scores', function (Blueprint $table) {
+        Schema::create('race_performances', function (Blueprint $table) {
             $table->id();
+
+            $table->string('name');
+            $table->string('age');
+            $table->foreignId('squadMemberId')->constrained('squad_members')->cascadeOnDelete()->nullable();
+            $table->foreignId('raceGroupId')->constrained('race_groups')->cascadeOnDelete();
             $table->integer('time');
             $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete();
             $table->string('rank')->nullable();
             $table->string('points')->nullable();
-            $table->foreignId('raceGroupMemberId')->constrained('race_group_members')->cascadeOnDelete();
             $table->string('status')->default('active');
             $table->boolean('isDeleted')->default(false);
             $table->timestamps();
@@ -29,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('race_scores');
+        Schema::dropIfExists('race_performances');
     }
 };

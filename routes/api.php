@@ -41,7 +41,7 @@ Route::middleware('user-auth')->group(function () {
 
     // Squad and squad members endpoints
     Route::controller(SquadController::class)->group(function () {
-        Route::post('/squads', 'create')->middleware('roles:admin');
+        Route::post('/squads', 'create')->middleware('roles:admin,coach');
         Route::get('/squads', 'getAllSquads');
         Route::get('/squads/{id}', 'getOneSquad');
         Route::put('/squads/{id}', 'updateSquad')->middleware('roles:admin,coach');
@@ -49,7 +49,7 @@ Route::middleware('user-auth')->group(function () {
 
         Route::post('/squads/{id}/members', 'addSwimmersToSquad')->middleware('roles:admin,coach');
         Route::get('/squads/{id}/members', 'getSquadMembers');
-        Route::delete('/squads/{id}/members', 'removeSquadMember')->middleware('roles:admin,coach');
+        Route::delete('/squads/{id}/members/{memberId}', 'removeSquadMember')->middleware('roles:admin,coach');
     });
 
     // Trainings endpoints
