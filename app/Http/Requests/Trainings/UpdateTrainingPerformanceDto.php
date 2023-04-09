@@ -17,6 +17,7 @@ class UpdateTrainingPerformanceDto extends FormRequest
             'squadMemberId' => 'sometimes|required|integer',
             'time' => 'sometimes|required|date_format:i:s.v',
             'strokeId' => 'sometimes|required|integer',
+            'trainingId' => 'sometimes|required|integer',
             'rank' => 'sometimes|required|string',
             'points' => 'sometimes|required|string',
             'trainingDate' => 'sometimes|required|date_format:Y-m-d',

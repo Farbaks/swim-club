@@ -214,13 +214,12 @@ class SquadController extends Controller
         }
 
         // Check if user has not yet been added to squad
-        $check = SquadMember::where('squadId', $id)
-            ->where('userId', $request->swimmer)->where('isDeleted', false)->first();
+        $check = SquadMember::where('userId', $request->swimmer)->where('isDeleted', false)->first();
 
         if ($check) {
             return response()->json([
                 'status' => 400,
-                'message' => 'This user is already a part of the squad.',
+                'message' => 'This user is already a part of a squad.',
                 'data' => []
             ], 200);
         }
@@ -237,6 +236,21 @@ class SquadController extends Controller
             'message' => 'Squad member(s) added successfully.',
             'data' => []
         ], 201);
+    }
+
+    // Function to fetch all sqaud members
+    public function getAllSquadMembers(Request $request)
+    {
+
+        $members = SquadMember::with('user')->get();
+
+        $membersCount = SquadMember::with('user')->count();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Squad Members fetched successfully.',
+            'data' => $members,
+        ], 200);
     }
 
     // Function to fetch sqaud members

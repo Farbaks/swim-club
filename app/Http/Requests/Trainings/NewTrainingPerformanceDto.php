@@ -17,8 +17,9 @@ class NewTrainingPerformanceDto extends FormRequest
             'squadMemberId' => 'required|integer',
             'time' => 'required|date_format:i:s.v',
             'strokeId' => 'required|integer',
+            'trainingId' => 'required|integer',
             'rank' => 'nullable|string',
-            'points' => 'nullable|string',
+            'points' => 'nullable|integer',
             'trainingDate' => 'required|date_format:Y-m-d',
         ];
     }

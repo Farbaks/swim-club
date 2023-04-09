@@ -23,6 +23,8 @@ Route::controller(UserController::class)->group(function () {
     Route::post('/signin', 'signin');
 });
 
+Route::get('/strokes', [TrainingController::class, 'getStrokes']);
+
 Route::middleware('user-auth')->group(function () {
 
     // Users endpoints
@@ -49,6 +51,7 @@ Route::middleware('user-auth')->group(function () {
 
         Route::post('/squads/{id}/members', 'addSwimmersToSquad')->middleware('roles:admin,coach');
         Route::get('/squads/{id}/members', 'getSquadMembers');
+        Route::get('/squads-members', 'getAllSquadMembers');
         Route::delete('/squads/{id}/members/{memberId}', 'removeSquadMember')->middleware('roles:admin,coach');
     });
 
@@ -60,10 +63,10 @@ Route::middleware('user-auth')->group(function () {
         Route::put('/trainings/{id}', 'updateTraining')->middleware('roles:admin,coach');
         Route::delete('/trainings/{id}', 'deleteTraining')->middleware('roles:admin');
 
-        Route::post('/trainings/{trainingId}/performances', 'addTrainingPerformance')->middleware('roles:admin,coach');
-        Route::put('/trainings/{trainingId}/performances/{performanceId}', 'updateTrainingPerformance')->middleware('roles:admin,coach');
+        Route::post('/training-performances', 'addTrainingPerformance')->middleware('roles:admin,coach');
+        Route::put('/training-performances/{performanceId}', 'updateTrainingPerformance')->middleware('roles:admin,coach');
         Route::get('/training-performances', 'getTrainingPerformances');
-        Route::delete('/trainings/{trainingId}/performances/{performanceId}', 'deleteTrainingPerformance')->middleware('roles:admin,coach');
+        Route::delete('/training-performances/{performanceId}', 'deleteTrainingPerformance')->middleware('roles:admin,coach');
     });
 
 });

@@ -16,6 +16,19 @@ use Illuminate\Http\Request;
 
 class TrainingController extends Controller
 {
+    // Function to fetch trainings
+    public function getStrokes(Request $request)
+    {
+
+        $strokes = Stroke::get();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Squads fetched successfully.',
+            'data' => $strokes,
+        ], 200);
+    }
+
     //Function to create a training
     public function create(NewTrainingDto $request)
     {
@@ -69,7 +82,7 @@ class TrainingController extends Controller
         // Filter and Sorts
         $page = $request->has('page') ? $request->get('page') : 0;
         $limit = $request->has('limit') ? $request->get('limit') : 20;
-
+        $squad = $request->has('squad') ? $request->get('squad') : '';
         $search = $request->has('query') ? $request->get('query') : '';
 
         $trainings = Training::with('squad')
@@ -78,18 +91,20 @@ class TrainingController extends Controller
             ->where(function ($query) use ($search) {
                 $query->where('trainings.name', 'like', '%' . $search . '%')
                     ->orWhere('trainings.requirements', 'like', '%' . $search . '%')
-                    ->orWhere('trainings.description', 'like', '%' . $search . '%')
-                    ->orWhere('squads.name', 'like', '%' . $search . '%');
-            })->where('trainings.isDeleted', false)
+                    ->orWhere('trainings.description', 'like', '%' . $search . '%');
+            })
+            ->where('squads.name', 'like', '%' . $squad . '%')
+            ->where('trainings.isDeleted', false)
             ->select('trainings.*')->get();
 
         $trainingsCount = Training::join('squads', 'trainings.squadId', '=', 'squads.id')
             ->where(function ($query) use ($search) {
                 $query->where('trainings.name', 'like', '%' . $search . '%')
                     ->orWhere('trainings.requirements', 'like', '%' . $search . '%')
-                    ->orWhere('trainings.description', 'like', '%' . $search . '%')
-                    ->orWhere('squads.name', 'like', '%' . $search . '%');
-            })->where('trainings.isDeleted', false)->count();
+                    ->orWhere('trainings.description', 'like', '%' . $search . '%');
+            })
+            ->where('squads.name', 'like', '%' . $squad . '%')
+            ->where('trainings.isDeleted', false)->count();
 
         return response()->json([
             'status' => 200,
@@ -200,10 +215,10 @@ class TrainingController extends Controller
     }
 
     // Function to add training performance
-    public function addTrainingPerformance(NewTrainingPerformanceDto $request, string $trainingId)
+    public function addTrainingPerformance(NewTrainingPerformanceDto $request)
     {
         // Check if training exists
-        $training = Training::where('id', $trainingId)->where('isDeleted', false)->first();
+        $training = Training::where('id', $request->trainingId)->where('isDeleted', false)->first();
 
         if ($training == '') {
             return response()->json([
@@ -237,7 +252,7 @@ class TrainingController extends Controller
 
         $performance = new TrainingPerformance;
 
-        $performance->trainingId = $trainingId;
+        $performance->trainingId = $request->trainingId;
         $performance->squadMemberId = $request->squadMemberId;
         $performance->time = $request->time;
         $performance->strokeId = $request->strokeId;
@@ -264,13 +279,14 @@ class TrainingController extends Controller
 
         $stroke = $request->has('stroke') ? $request->get('stroke') : '';
         $training = $request->has('training') ? $request->get('training') : '';
-
+        $squad = $request->has('squad') ? $request->get('squad') : '';
         $search = $request->has('query') ? $request->get('query') : '';
 
-        $performances = TrainingPerformance::with(['squadMember.squad', 'squadMember.user', 'training'])
+        $performances = TrainingPerformance::with(['squadMember.squad', 'squadMember.user', 'training', 'stroke'])
             ->offset(($page - 1) * $limit)->limit($limit)
             ->join('squad_members', 'training_performances.squadMemberid', '=', 'squad_members.id')
             ->join('users', 'squad_members.userId', '=', 'users.id')
+            ->join('squads', 'squad_members.squadId', '=', 'squads.id')
             ->join('trainings', 'training_performances.trainingid', '=', 'trainings.id')
             ->join('strokes', 'training_performances.strokeId', '=', 'strokes.id')
             ->where(function ($query) use ($search) {
@@ -281,6 +297,7 @@ class TrainingController extends Controller
             })
             ->where('strokes.name', 'like', '%' . $stroke . '%')
             ->where('trainings.name', 'like', '%' . $training . '%')
+            ->where('squads.name', 'like', '%' . $squad . '%')
             ->select('training_performances.*')
             ->get();
 
@@ -311,10 +328,10 @@ class TrainingController extends Controller
     }
 
     // Function to edit training performance
-    public function updateTrainingPerformance(UpdateTrainingPerformanceDto $request, string $trainingId, string $performanceId)
+    public function updateTrainingPerformance(UpdateTrainingPerformanceDto $request, string $performanceId)
     {
         // Check if training exists
-        $training = Training::where('id', $trainingId)->where('isDeleted', false)->first();
+        $training = Training::where('id', $request->trainingId)->where('isDeleted', false)->first();
 
         if ($training == '') {
             return response()->json([
@@ -367,6 +384,8 @@ class TrainingController extends Controller
             $performance->time = $request->time;
         if ($request->strokeId)
             $performance->strokeId = $request->strokeId;
+        if ($request->trainingId)
+            $performance->trainingId = $request->trainingId;
         if ($request->rank)
             $performance->rank = $request->rank;
         if ($request->points)
