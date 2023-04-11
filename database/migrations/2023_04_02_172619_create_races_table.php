@@ -16,7 +16,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->mediumtext('description')->nullable();
             $table->longtext('requirements')->nullable();
-            $table->string('dates');
+            $table->date('startDate');
+            $table->date('endDate');
             $table->string('status')->default('active');
             $table->boolean('isDeleted')->default(false);
             $table->timestamps();

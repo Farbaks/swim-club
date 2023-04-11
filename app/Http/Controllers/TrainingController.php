@@ -95,7 +95,9 @@ class TrainingController extends Controller
             })
             ->where('squads.name', 'like', '%' . $squad . '%')
             ->where('trainings.isDeleted', false)
-            ->select('trainings.*')->get();
+            ->select('trainings.*')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         $trainingsCount = Training::join('squads', 'trainings.squadId', '=', 'squads.id')
             ->where(function ($query) use ($search) {
@@ -104,7 +106,9 @@ class TrainingController extends Controller
                     ->orWhere('trainings.description', 'like', '%' . $search . '%');
             })
             ->where('squads.name', 'like', '%' . $squad . '%')
-            ->where('trainings.isDeleted', false)->count();
+            ->where('trainings.isDeleted', false)
+            ->orderBy('created_at', 'desc')
+            ->count();
 
         return response()->json([
             'status' => 200,
@@ -299,6 +303,7 @@ class TrainingController extends Controller
             ->where('trainings.name', 'like', '%' . $training . '%')
             ->where('squads.name', 'like', '%' . $squad . '%')
             ->select('training_performances.*')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $performancesCount = TrainingPerformance::join('squad_members', 'training_performances.squadMemberid', '=', 'squad_members.id')
@@ -313,6 +318,7 @@ class TrainingController extends Controller
             })
             ->where('strokes.name', 'like', '%' . $stroke . '%')
             ->where('trainings.name', 'like', '%' . $training . '%')
+            ->orderBy('created_at', 'desc')
             ->count();
 
         return response()->json([

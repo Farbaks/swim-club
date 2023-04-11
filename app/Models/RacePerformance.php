@@ -12,10 +12,11 @@ class RacePerformance extends Model
     protected $fillable = [
         'name',
         'age',
-        'squadMemberId',
+        'club',
+        'userId',
         'raceGroupId',
         'time',
-        'stroke',
+        'strokeId',
         'rank',
         'points',
         'status',

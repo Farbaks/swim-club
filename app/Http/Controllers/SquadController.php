@@ -141,7 +141,7 @@ class SquadController extends Controller
         if ($checkUser != "") {
             return response()->json([
                 'status' => 400,
-                'message' => 'A squad with this name already exists',
+                'message' => 'Another squad with this name already exists',
                 'data' => []
             ], 200);
         }
@@ -243,8 +243,6 @@ class SquadController extends Controller
     {
 
         $members = SquadMember::with('user')->get();
-
-        $membersCount = SquadMember::with('user')->count();
 
         return response()->json([
             'status' => 200,

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Relationships\UpdateRelationshipDto;
 use App\Http\Requests\Users\NewUserDto;
 use App\Http\Requests\Users\SigninUserDto;
+use App\Http\Requests\Users\UpdatePasswordDto;
+use App\Http\Requests\Users\UpdateUserDto;
 use App\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -54,21 +56,24 @@ class UserController extends Controller
         $user->postcode = $request->postcode;
         $user->save();
 
-        // For underage swimmers
+        // For underage users
         if ($this->getAgeDifference($request->dateOfBirth) < 18) {
 
-            if($request->role != 'swimmer') {
+            // Check if user is a swimmer
+            if ($request->role != 'swimmer') {
                 $user->delete();
 
                 return response()->json([
                     'status' => 400,
-                    'message' => 'User with "'.$request->role.'" role has to be above the age of 18.',
+                    'message' => 'User with "' . $request->role . '" role has to be above the age of 18.',
                     'data' => []
                 ], 200);
             }
 
             // Check if parent email is provided
             if (!$request->parentEmail) {
+                $user->delete();
+
                 return response()->json([
                     'status' => 400,
                     'message' => 'Email linked to parent\'s registered account is required for swimmers below the age of 18.',
@@ -76,7 +81,7 @@ class UserController extends Controller
                 ], 200);
             }
 
-            // Check for guardian email
+            // Check if guardian email exists
             $checkParent = User::where('emailAddress', $request->parentEmail)->where('role', 'parent')->first();
 
             if ($checkParent == "") {
@@ -217,6 +222,173 @@ class UserController extends Controller
             'data' => $user
         ], 200);
 
+    }
+
+    // Function to update user info
+    public function updateOneUser(UpdateUserDto $request)
+    {
+        $user = User::where('id', $request->userId)->first();
+
+        // Check if user is underage
+        $checkAge = $this->getAgeDifference($user->dateOfBirth);
+
+        if ($checkAge < 18) {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Please reach out to your guardian to update your account info.',
+                'data' => []
+            ], 200);
+        }
+
+        // Check if email is taken
+        if ($request->emailAddress) {
+            $checkUser = User::where('emailAddress', $request->emailAddress)
+                ->whereNot('id', $request->userId)->first();
+
+            if ($checkUser != "") {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'An account with this email address already exists',
+                    'data' => []
+                ], 200);
+            }
+        }
+
+        // Check if phone number is taken
+        if ($request->phoneNumber) {
+            $checkUser = User::where('phoneNumber', $request->phoneNumber)
+                ->whereNot('id', $request->userId)->first();
+
+            if ($checkUser != "") {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'An account with this phone number already exists',
+                    'data' => []
+                ], 200);
+            }
+        }
+
+        if ($request->firstName)
+            $user->firstName = $request->firstName;
+        if ($request->lastName)
+            $user->lastName = $request->lastName;
+        if ($request->emailAddress)
+            $user->emailAddress = $request->emailAddress;
+        if ($request->phoneNumber)
+            $user->phoneNumber = $request->phoneNumber;
+        if ($request->pictureUrl)
+            $user->pictureUrl = $request->pictureUrl;
+        if ($request->gender)
+            $user->gender = $request->gender;
+        if ($request->address)
+            $user->address = $request->address;
+        if ($request->postcode)
+            $user->postcode = $request->postcode;
+
+        $user->save();
+
+        return response()->json([
+            'status' => 201,
+            'message' => 'User account has been updated',
+            'data' => $user
+        ], 201);
+    }
+
+    // Function to update password
+    public function updatePassword(UpdatePasswordDto $request)
+    {   
+        $user = User::where('id', $request->userId)->first();
+
+        // Check if password is correct
+        if (!Hash::check($request->oldPassword, $user->password)) {
+            // The passwords don't match...
+            return response()->json([
+                'status' => 400,
+                'message' => 'Incorrect current password',
+                'data' => []
+            ], 200);
+        }
+
+        $user->password = Hash::make($request->newPassword);
+
+        $user->save();
+
+        // Generate api_token
+        return response()->json([
+            'status' => 200,
+            'message' => 'Password changed successfully.',
+            'data' => $user
+        ], 200);
+    }
+
+    // Function to update ward's info
+    public function updateRelationshipInfo(UpdateUserDto $request, string $id)
+    {
+        // Check if relationship exists
+        $relationship = Relationship::where('id', $id)->first();
+
+        if ($relationship == "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'Relationship does not exist',
+                'data' => []
+            ], 200);
+        }
+
+        $user = User::where('id', $relationship->wardId)->first();
+
+        // Check if email is taken
+        if ($request->emailAddress) {
+            $checkUser = User::where('emailAddress', $request->emailAddress)
+                ->whereNot('id', $request->userId)->first();
+
+            if ($checkUser != "") {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'An account with this email address already exists',
+                    'data' => []
+                ], 200);
+            }
+        }
+
+        // Check if phone number is taken
+        if ($request->phoneNumber) {
+            $checkUser = User::where('phoneNumber', $request->phoneNumber)
+                ->whereNot('id', $request->userId)->first();
+
+            if ($checkUser != "") {
+                return response()->json([
+                    'status' => 400,
+                    'message' => 'An account with this phone number already exists',
+                    'data' => []
+                ], 200);
+            }
+        }
+
+        if ($request->firstName)
+            $user->firstName = $request->firstName;
+        if ($request->lastName)
+            $user->lastName = $request->lastName;
+        if ($request->emailAddress)
+            $user->emailAddress = $request->emailAddress;
+        if ($request->phoneNumber)
+            $user->phoneNumber = $request->phoneNumber;
+        if ($request->pictureUrl)
+            $user->pictureUrl = $request->pictureUrl;
+        if ($request->gender)
+            $user->gender = $request->gender;
+        if ($request->address)
+            $user->address = $request->address;
+        if ($request->postcode)
+            $user->postcode = $request->postcode;
+
+        $user->save();
+
+        return response()->json([
+            'status' => 201,
+            'message' => 'User account has been updated',
+            'data' => $user
+        ], 201);
     }
 
     // Get underage swimmers for a parent

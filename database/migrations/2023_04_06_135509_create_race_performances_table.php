@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('race_performances', function (Blueprint $table) {
             $table->id();
-
             $table->string('name');
             $table->string('age');
-            $table->foreignId('squadMemberId')->constrained('squad_members')->cascadeOnDelete()->nullable();
+            $table->string('club')->nullable();
+            $table->foreignId('userId')->constrained('users')->cascadeOnDelete()->nullable();
             $table->foreignId('raceGroupId')->constrained('race_groups')->cascadeOnDelete();
-            $table->integer('time');
-            $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete();
+            
+            $table->string('time')->nullable();
+            $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete()->nullable();
             $table->string('rank')->nullable();
             $table->string('points')->nullable();
             $table->string('status')->default('active');
