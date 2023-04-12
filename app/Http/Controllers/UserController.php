@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Relationships\UpdateRelationshipDto;
 use App\Http\Requests\Users\NewUserDto;
+use App\Http\Requests\Users\NewWardDto;
 use App\Http\Requests\Users\SigninUserDto;
 use App\Http\Requests\Users\UpdatePasswordDto;
 use App\Http\Requests\Users\UpdateUserDto;
@@ -42,6 +43,16 @@ class UserController extends Controller
             ], 200);
         }
 
+        // For underage users
+        if ($this->getAgeDifference($request->dateOfBirth) < 18) {
+
+            return response()->json([
+                'status' => 400,
+                'message' => 'User with "' . $request->role . '" role has to be above the age of 18.',
+                'data' => []
+            ], 200);
+        }
+
         $user = new User;
         $user->firstName = $request->firstName;
         $user->lastName = $request->lastName;
@@ -55,51 +66,6 @@ class UserController extends Controller
         $user->address = $request->address;
         $user->postcode = $request->postcode;
         $user->save();
-
-        // For underage users
-        if ($this->getAgeDifference($request->dateOfBirth) < 18) {
-
-            // Check if user is a swimmer
-            if ($request->role != 'swimmer') {
-                $user->delete();
-
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'User with "' . $request->role . '" role has to be above the age of 18.',
-                    'data' => []
-                ], 200);
-            }
-
-            // Check if parent email is provided
-            if (!$request->parentEmail) {
-                $user->delete();
-
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'Email linked to parent\'s registered account is required for swimmers below the age of 18.',
-                    'data' => []
-                ], 200);
-            }
-
-            // Check if guardian email exists
-            $checkParent = User::where('emailAddress', $request->parentEmail)->where('role', 'parent')->first();
-
-            if ($checkParent == "") {
-                $user->delete();
-
-                return response()->json([
-                    'status' => 400,
-                    'message' => 'No account linked with the parent\'s email was found.',
-                    'data' => []
-                ], 200);
-            }
-
-            $requestRelationship = new Relationship;
-            $requestRelationship->guardianId = $checkParent->id;
-            $requestRelationship->wardId = $user->id;
-            $requestRelationship->status = 'pending';
-            $requestRelationship->save();
-        }
 
         return response()->json([
             'status' => 201,
@@ -296,7 +262,7 @@ class UserController extends Controller
 
     // Function to update password
     public function updatePassword(UpdatePasswordDto $request)
-    {   
+    {
         $user = User::where('id', $request->userId)->first();
 
         // Check if password is correct
@@ -321,26 +287,66 @@ class UserController extends Controller
         ], 200);
     }
 
-    // Function to update ward's info
-    public function updateRelationshipInfo(UpdateUserDto $request, string $id)
+    // Function to create a ward
+    public function createWard(NewWardDto $request)
     {
-        // Check if relationship exists
-        $relationship = Relationship::where('id', $id)->first();
+        $checkUser = User::where('emailAddress', $request->emailAddress)->first();
 
-        if ($relationship == "") {
+        if ($checkUser != "") {
             return response()->json([
                 'status' => 400,
-                'message' => 'Relationship does not exist',
+                'message' => 'An account with this email address already exists',
                 'data' => []
             ], 200);
         }
 
-        $user = User::where('id', $relationship->wardId)->first();
+        $checkUser = User::where('phoneNumber', $request->phoneNumber)->first();
+
+        if ($checkUser != "") {
+            return response()->json([
+                'status' => 400,
+                'message' => 'An account with this phone number already exists',
+                'data' => []
+            ], 200);
+        }
+
+        $user = new User;
+        $user->firstName = $request->firstName;
+        $user->lastName = $request->lastName;
+        $user->emailAddress = $request->emailAddress;
+        $user->password = Hash::make($request->password);
+        $user->phoneNumber = $request->phoneNumber;
+        $user->dateOfBirth = $request->dateOfBirth;
+        $user->pictureUrl = $request->pictureUrl;
+        $user->role = 'swimmer';
+        $user->gender = $request->gender;
+        $user->address = $request->address;
+        $user->postcode = $request->postcode;
+        $user->save();
+
+        $relationship = new Relationship;
+        $relationship->guardianId = $request->userId;
+        $relationship->wardId = $user->id;
+        $relationship->status = 'active';
+        $relationship->save();
+
+        return response()->json([
+            'status' => 201,
+            'message' => 'User account has been created',
+            'data' => $user
+        ], 201);
+    }
+
+    // Function to update ward's info
+    public function updateRelationshipInfo(UpdateUserDto $request, string $id)
+    {
+
+        $user = User::where('id', $request->id)->first();
 
         // Check if email is taken
         if ($request->emailAddress) {
             $checkUser = User::where('emailAddress', $request->emailAddress)
-                ->whereNot('id', $request->userId)->first();
+                ->whereNot('id', $request->id)->first();
 
             if ($checkUser != "") {
                 return response()->json([
@@ -354,7 +360,7 @@ class UserController extends Controller
         // Check if phone number is taken
         if ($request->phoneNumber) {
             $checkUser = User::where('phoneNumber', $request->phoneNumber)
-                ->whereNot('id', $request->userId)->first();
+                ->whereNot('id', $request->id)->first();
 
             if ($checkUser != "") {
                 return response()->json([
@@ -405,31 +411,6 @@ class UserController extends Controller
             'message' => 'Relationships fetched successfully.',
             'data' => $relationship,
         ], 200);
-    }
-
-    // Update relationship
-    public function updateRelationship(UpdateRelationshipDto $request, string $id)
-    {
-        // Check if relationship exists
-        $relationship = Relationship::where('id', $id)->first();
-
-        if ($relationship == "") {
-            return response()->json([
-                'status' => 400,
-                'message' => 'Relationship does not exist',
-                'data' => []
-            ], 200);
-        }
-
-        $relationship->status = $request->status;
-        $relationship->save();
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'Relationships updated successfully.',
-            'data' => $relationship,
-        ], 200);
-
     }
 
     // Function to generate token

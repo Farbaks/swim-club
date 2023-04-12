@@ -4,9 +4,9 @@ namespace App\Http\Requests\Users;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class NewUserDto extends FormRequest
+class NewWardDto extends FormRequest
 {
-    /**
+     /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\Rule|array|string>
@@ -21,7 +21,6 @@ class NewUserDto extends FormRequest
             'password' => 'required|min:8|string',
             'dateOfBirth' => 'required|date_format:Y-m-d|before:today',
             'pictureUrl' => 'sometimes|required|url',
-            'role' => 'required|in:admin,coach,swimmer,parent',
             'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'postcode' => 'required|string',

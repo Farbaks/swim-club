@@ -14,14 +14,14 @@ class UpdateUserDto extends FormRequest
     public function rules(): array
     {
         return [
-            'firstName' => 'sometimesrequired|max:50|string',
-            'lastName' => 'sometimesrequired|max:50|string',
-            'phoneNumber' => 'sometimesrequired',
-            'emailAddress' => 'sometimesrequired|email',
+            'firstName' => 'sometimes|required|max:50|string',
+            'lastName' => 'sometimes|required|max:50|string',
+            'phoneNumber' => 'sometimes|required',
+            'emailAddress' => 'sometimes|required|email',
             'pictureUrl' => 'sometimes|required|url',
-            'gender' => 'sometimesrequired|in:male,female,others',
-            'address' => 'sometimesrequired|string',
-            'postcode' => 'sometimesrequired|string',
+            'gender' => 'sometimes|required|in:male,female,others',
+            'address' => 'sometimes|required|string',
+            'postcode' => 'sometimes|required|string',
         ];
     }
 

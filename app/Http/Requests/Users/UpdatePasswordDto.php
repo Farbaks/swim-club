@@ -14,7 +14,7 @@ class UpdatePasswordDto extends FormRequest
     public function rules(): array
     {
         return [
-            'oldPassword' => 'required|min:8|string',
+            'oldPassword' => 'required|string',
             'newPassword' => 'required|min:8|string',
         ];
     }

@@ -32,16 +32,15 @@ Route::middleware('user-auth')->group(function () {
     Route::controller(UserController::class)->group(function () {
         Route::get('/users', 'getAllUsers');
         // 
+        Route::post('/users/relationships', 'createWard');
         Route::get('/users/relationships', 'getRelationships');
-        Route::put('/users/relationships/{id}', 'updateRelationship');
         Route::put('/users/relationships/{id}/info', 'updateRelationshipInfo');
         // 
         Route::put('/users/password', 'updatePassword');
         // 
         Route::get('/users/me', 'refreshToken');
+        Route::put('/users/me', 'updateOneUser');
         Route::get('/users/{id}', 'getOneUser');
-        Route::put('/users/{id}', 'updateOneUser');
-
     });
 
     // Squad and squad members endpoints
