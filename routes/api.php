@@ -51,6 +51,7 @@ Route::middleware('user-auth')->group(function () {
         Route::put('/squads/{id}', 'updateSquad')->middleware('roles:admin,coach');
         Route::delete('/squads/{id}', 'deleteSquad')->middleware('roles:admin');
         // 
+        // Get all squad members without limit (for dropdowns)
         Route::get('/squads-members', 'getAllSquadMembers');
         // 
         Route::post('/squads/{id}/members', 'addSwimmersToSquad')->middleware('roles:admin,coach');
@@ -76,7 +77,8 @@ Route::middleware('user-auth')->group(function () {
     Route::controller(RaceController::class)->group(function () {
         // Race
         Route::post('/galas', 'createRace')->middleware('roles:admin');
-        Route::get('/galas', 'getAllRaces');
+        Route::get('/galas', 'getRaces');
+        Route::get('/all-galas', 'getAllRaces');
         Route::get('/galas/{id}', 'getOneRace');
         Route::put('/galas/{id}', 'updateRace')->middleware('roles:admin');
         Route::delete('/galas/{id}', 'deleteRace')->middleware('roles:admin');

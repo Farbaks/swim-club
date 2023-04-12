@@ -47,7 +47,7 @@ class RaceController extends Controller
     }
 
     // Function to get all races
-    public function getAllRaces(Request $request)
+    public function getRaces(Request $request)
     {
         // Filter and Sorts
         $page = $request->has('page') ? $request->get('page') : 0;
@@ -85,6 +85,20 @@ class RaceController extends Controller
                 'limit' => $limit,
                 'count' => $racesCount
             ]
+        ], 200);
+    }
+
+    // Function to get all races
+    public function getAllRaces(Request $request)
+    {
+
+        $races = Race::orderBy('created_at', 'desc')->get();
+
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Gala events fetched successfully.',
+            'data' => $races,
         ], 200);
     }
 
