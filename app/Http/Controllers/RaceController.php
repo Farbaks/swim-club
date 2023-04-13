@@ -105,7 +105,10 @@ class RaceController extends Controller
     // Function to get one race
     public function getOneRace(Request $request, string $id)
     {
-        $race = Race::with(['raceGroups.raceMembers'])->where('id', $id)->where('isDeleted', false)->first();
+        $race = Race::with(['raceGroups.raceMembers' => function ($q){
+            $q->orderBy('points', 'DESC');
+        }])
+        ->where('id', $id)->where('isDeleted', false)->first();
 
         if ($race == '') {
             return response()->json([
@@ -371,6 +374,9 @@ class RaceController extends Controller
 
         $swimmer->save();
 
+        // Recaliberate positions
+        $this->adjustPosition($swimmer->raceGroupId);
+
         return response()->json([
             'status' => 201,
             'message' => 'Swimmer details updated successfully.',
@@ -399,6 +405,19 @@ class RaceController extends Controller
             'message' => 'Swimmer details deleted successfully.',
             'data' => []
         ], 201);
+    }
+
+    // Function to recalibrate swimmer position
+    public function adjustPosition(string $raceGroupId)
+    {
+        // Check if swimmer exists in group
+        $swimmers = RacePerformance::where('raceGroupId', $raceGroupId)->orderBy('points', 'DESC')
+        ->where('isDeleted', false)->get();
+
+        for ($i = 0; $i < $swimmers->count(); $i++) {
+            $swimmers[$i]->place = $i + 1;
+            $swimmers[$i]->save();
+        }
     }
 
     // Function to check the age of user

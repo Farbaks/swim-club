@@ -16,7 +16,7 @@ class UpdateRaceGroupMemberDto extends FormRequest
         return [
             'time' => 'sometimes|required|date_format:i:s.v',
             'strokeId' => 'sometimes|required|integer',
-            'rank' => 'sometimes|required|string',
+            'rank' => 'nullable|string',
             'points' => 'sometimes|required|integer',
         ];
     }

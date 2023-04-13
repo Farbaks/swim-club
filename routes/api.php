@@ -26,6 +26,8 @@ Route::controller(UserController::class)->group(function () {
 
 Route::get('/strokes', [TrainingController::class, 'getStrokes']);
 
+Route::get('/swimmers', [UserController::class, 'getSwimmers']);
+
 Route::middleware('user-auth')->group(function () {
 
     // Users endpoints

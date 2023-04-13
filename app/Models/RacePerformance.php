@@ -15,6 +15,7 @@ class RacePerformance extends Model
         'club',
         'userId',
         'raceGroupId',
+        'place',
         'time',
         'strokeId',
         'rank',

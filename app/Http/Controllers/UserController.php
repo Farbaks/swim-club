@@ -8,6 +8,7 @@ use App\Http\Requests\Users\NewWardDto;
 use App\Http\Requests\Users\SigninUserDto;
 use App\Http\Requests\Users\UpdatePasswordDto;
 use App\Http\Requests\Users\UpdateUserDto;
+use App\Models\RacePerformance;
 use App\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -410,6 +411,69 @@ class UserController extends Controller
             'status' => 200,
             'message' => 'Relationships fetched successfully.',
             'data' => $relationship,
+        ], 200);
+    }
+
+    // Function to fetch all swimmers with their performance records
+    public function getSwimmers(Request $request)
+    {
+        // Filter and Sorts
+        $page = $request->has('page') ? $request->get('page') : 0;
+        $limit = $request->has('limit') ? $request->get('limit') : 20;
+
+        $role = 'swimmer';
+        $squad = $request->has('squad') ? $request->get('squad') : '';
+        $search = $request->has('query') ? $request->get('query') : '';
+
+        $performances = User::where('role', 'swimmer')
+            ->offset(($page - 1) * $limit)->limit($limit)
+            ->join('squad_members', 'users.id', '=', 'squad_members.userId')
+            ->join('squads', 'squad_members.squadId', '=', 'squads.id')
+            ->where(function ($query) use ($search) {
+                $query->where('users.firstName', 'like', '%' . $search . '%')
+                    ->orWhere('users.lastName', 'like', '%' . $search . '%');
+            })
+            ->where('squads.name', 'like', '%' . $squad . '%')
+            ->select('users.id','users.firstName', 'users.lastName', 'users.dateOfBirth', 'users.gender', 'squads.name as squad')
+            ->orderBy('users.created_at', 'desc')
+            ->get();
+
+        foreach ($performances as $performance) {
+            $performance['firstPlaceCount'] = RacePerformance::where('userId', $performance->id)->where('place', 1)->count();
+            $performance['secondPlaceCount'] = RacePerformance::where('userId', $performance->id)->where('place', 2)->count();
+            $performance['thirdPlaceCount'] = RacePerformance::where('userId', $performance->id)->where('place', 3)->count();
+
+            $bestTime = RacePerformance::where('userId', $performance->id)
+            ->join('race_groups', 'race_performances.raceGroupId', '=', 'race_groups.id')
+            ->select('race_groups.name as group', 'race_performances.time',  'race_performances.points')
+            ->orderBy('race_performances.points', 'desc')->first();
+            
+            $performance['bestResultGroup'] = $bestTime->group;
+            $performance['bestResultTime'] = $bestTime->time;
+            $performance['bestResultPoints'] = $bestTime->points;
+        }
+
+        $performancesCount = User::where('role', 'swimmer')
+            ->join('squad_members', 'users.id', '=', 'squad_members.userId')
+            ->join('squads', 'squads.id', '=', 'squad_members.squadId')
+            ->where(function ($query) use ($search) {
+                $query->where('users.firstName', 'like', '%' . $search . '%')
+                    ->orWhere('users.lastName', 'like', '%' . $search . '%');
+            })
+            ->where('squads.name', 'like', '%' . $squad . '%')
+            ->select('users.*')
+            ->orderBy('created_at', 'desc')
+            ->count();
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Swimmer Performances fetched successfully.',
+            'data' => $performances,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'count' => $performancesCount
+            ]
         ], 200);
     }
 

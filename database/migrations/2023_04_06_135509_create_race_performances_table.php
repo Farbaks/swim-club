@@ -16,11 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('age');
             $table->string('club')->nullable();
-            $table->foreignId('userId')->constrained('users')->cascadeOnDelete()->nullable();
+            $table->foreignId('userId')->nullable()->constrained('users')->cascadeOnDelete();
             $table->foreignId('raceGroupId')->constrained('race_groups')->cascadeOnDelete();
-            
+
+            $table->integer('place')->nullable();
             $table->string('time')->nullable();
-            $table->foreignId('strokeId')->constrained('strokes')->cascadeOnDelete()->nullable();
+            $table->foreignId('strokeId')->nullable()->constrained('strokes')->cascadeOnDelete();
             $table->string('rank')->nullable();
             $table->string('points')->nullable();
             $table->string('status')->default('active');
