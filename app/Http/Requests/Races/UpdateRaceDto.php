@@ -17,8 +17,8 @@ class UpdateRaceDto extends FormRequest
             'name' => 'sometimes|required|max:50|string',
             'description' => 'sometimes|required|string',
             'requirements' => 'sometimes|nullable|string',
-            'startDate' => 'sometimes|required|date_format:Y-m-d',
-            'endDate' => 'sometimes|required|date_format:Y-m-d',
+            'startDate' => 'sometimes|required|date_format:Y-m-d|after:yesterday',
+            'endDate' => 'sometimes|required|date_format:Y-m-d|after_or_equal:startDate',
         ];
     }
 

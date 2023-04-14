@@ -11,6 +11,7 @@ use App\Http\Requests\Races\UpdateRaceGroupMemberDto;
 use App\Models\Race;
 use App\Models\RaceGroup;
 use App\Models\RacePerformance;
+use App\Models\Squad;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -60,13 +61,13 @@ class RaceController extends Controller
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhere('description', 'like', '%' . $search . '%')
                     ->orWhere('requirements', 'like', '%' . $search . '%');
-            })->where('isDeleted', false)->orderBy('created_at', 'desc')->get();
+            })->where('isDeleted', false)->orderBy('startDate', 'desc')->get();
 
         $racesCount = Race::where(function ($query) use ($search) {
             $query->where('name', 'like', '%' . $search . '%')
                 ->orWhere('description', 'like', '%' . $search . '%')
                 ->orWhere('requirements', 'like', '%' . $search . '%');
-        })->where('isDeleted', false)->orderBy('created_at', 'desc')->count();
+        })->where('isDeleted', false)->orderBy('startDate', 'desc')->count();
 
         // Add group count
         foreach ($races as $race) {

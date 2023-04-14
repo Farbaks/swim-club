@@ -8,9 +8,12 @@ use App\Http\Requests\Users\NewWardDto;
 use App\Http\Requests\Users\SigninUserDto;
 use App\Http\Requests\Users\UpdatePasswordDto;
 use App\Http\Requests\Users\UpdateUserDto;
+use App\Models\Race;
 use App\Models\RacePerformance;
 use App\Models\Relationship;
+use App\Models\Squad;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -421,7 +424,6 @@ class UserController extends Controller
         $page = $request->has('page') ? $request->get('page') : 0;
         $limit = $request->has('limit') ? $request->get('limit') : 20;
 
-        $role = 'swimmer';
         $squad = $request->has('squad') ? $request->get('squad') : '';
         $search = $request->has('query') ? $request->get('query') : '';
 
@@ -434,7 +436,7 @@ class UserController extends Controller
                     ->orWhere('users.lastName', 'like', '%' . $search . '%');
             })
             ->where('squads.name', 'like', '%' . $squad . '%')
-            ->select('users.id','users.firstName', 'users.lastName', 'users.dateOfBirth', 'users.gender', 'squads.name as squad')
+            ->select('users.id', 'users.firstName', 'users.lastName', 'users.dateOfBirth', 'users.gender', 'squads.name as squad')
             ->orderBy('users.created_at', 'desc')
             ->get();
 
@@ -444,10 +446,10 @@ class UserController extends Controller
             $performance['thirdPlaceCount'] = RacePerformance::where('userId', $performance->id)->where('place', 3)->count();
 
             $bestTime = RacePerformance::where('userId', $performance->id)
-            ->join('race_groups', 'race_performances.raceGroupId', '=', 'race_groups.id')
-            ->select('race_groups.name as group', 'race_performances.time',  'race_performances.points')
-            ->orderBy('race_performances.points', 'desc')->first();
-            
+                ->join('race_groups', 'race_performances.raceGroupId', '=', 'race_groups.id')
+                ->select('race_groups.name as group', 'race_performances.time', 'race_performances.points')
+                ->orderBy('race_performances.points', 'desc')->first();
+
             $performance['bestResultGroup'] = $bestTime->group;
             $performance['bestResultTime'] = $bestTime->time;
             $performance['bestResultPoints'] = $bestTime->points;
@@ -474,6 +476,60 @@ class UserController extends Controller
                 'limit' => $limit,
                 'count' => $performancesCount
             ]
+        ], 200);
+    }
+
+    // Function to fetch dashboard report 
+    public function getReport()
+    {
+
+        $report = [];
+
+        $report['numOfCoaches'] = User::where('role', 'coach')->where('isDeleted', false)->count();
+        $report['numOfSquads'] = Squad::where('isDeleted', false)->count();
+        $report['numberofSwimmers'] = User::where('role', 'swimmer')->where('isDeleted', false)->count();
+
+        $report['upcomingGalas'] = Race::where('startDate', '>=', date("Y-m-d"))->orderBy('startDate', 'asc')->get();
+
+        $subQuery = User::join('race_performances', 'users.id', '=', 'race_performances.userId')
+            ->selectRaw('users.*')
+            ->selectRaw('count(*) as occurence')
+            ->selectRaw('race_performances.place as place')
+            ->selectRaw('CASE
+                WHEN race_performances.place = 1 THEN 3 * count(place)
+                WHEN race_performances.place = 2 THEN 2 * count(place)
+                WHEN race_performances.place = 3 THEN 1 * count(place)
+                ELSE 0
+                end as points')
+            ->groupByRaw('users.id, place');
+
+        $report['swimmers'] = DB::query()->fromSub($subQuery, "n1")
+            ->selectRaw('id, firstName, lastName, dateOfBirth, gender, sum(points) as totalPoints')
+            ->groupBy('id')
+            ->orderBy('totalPoints', 'desc')
+            ->limit(5)
+            ->get();
+
+        foreach ($report['swimmers'] as $performance) {
+            $performance->firstPlaceCount = RacePerformance::where('userId', $performance->id)->where('place', 1)->count();
+            $performance->secondPlaceCount = RacePerformance::where('userId', $performance->id)->where('place', 2)->count();
+            $performance->thirdPlaceCount = RacePerformance::where('userId', $performance->id)->where('place', 3)->count();
+
+            $bestTime = RacePerformance::where('userId', $performance->id)
+                ->join('race_groups', 'race_performances.raceGroupId', '=', 'race_groups.id')
+                ->select('race_groups.name as group', 'race_performances.time', 'race_performances.points')
+                ->orderBy('race_performances.points', 'desc')->first();
+
+            $performance->bestResultGroup = $bestTime->group;
+            $performance->bestResultTime = $bestTime->time;
+            $performance->bestResultPoints = $bestTime->points;
+        }
+
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'Report fetched successfully.',
+            'data' => $report
         ], 200);
     }
 

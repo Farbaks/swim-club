@@ -17,8 +17,8 @@ class NewRaceDto extends FormRequest
             'name' => 'required|max:50|string',
             'description' => 'required|string',
             'requirements' => 'nullable|string',
-            'startDate' => 'required|date_format:Y-m-d',
-            'endDate' => 'required|date_format:Y-m-d',
+            'startDate' => 'required|date_format:Y-m-d|after:yesterday',
+            'endDate' => 'required|date_format:Y-m-d|after_or_equal:startDate',
         ];
     }
 
