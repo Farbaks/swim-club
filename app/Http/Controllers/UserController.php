@@ -488,6 +488,7 @@ class UserController extends Controller
         $report['numOfCoaches'] = User::where('role', 'coach')->where('isDeleted', false)->count();
         $report['numOfSquads'] = Squad::where('isDeleted', false)->count();
         $report['numberofSwimmers'] = User::where('role', 'swimmer')->where('isDeleted', false)->count();
+        $report['numberofGalas'] = Race::where('startDate', '<', date("Y-m-d"))->where('isDeleted', false)->count();
 
         $report['upcomingGalas'] = Race::where('startDate', '>=', date("Y-m-d"))->orderBy('startDate', 'asc')->get();
 
@@ -507,7 +508,7 @@ class UserController extends Controller
             ->selectRaw('id, firstName, lastName, dateOfBirth, gender, sum(points) as totalPoints')
             ->groupBy('id')
             ->orderBy('totalPoints', 'desc')
-            ->limit(5)
+            ->limit(3)
             ->get();
 
         foreach ($report['swimmers'] as $performance) {
@@ -523,6 +524,8 @@ class UserController extends Controller
             $performance->bestResultGroup = $bestTime->group;
             $performance->bestResultTime = $bestTime->time;
             $performance->bestResultPoints = $bestTime->points;
+
+            $performance->age = $this->getAgeDifference($performance->dateOfBirth);
         }
 
 
